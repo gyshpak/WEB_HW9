@@ -31,23 +31,19 @@ class AuthorsSpider(scrapy.Spider):
         "FEED_URI": "authors.json",
     }
     allowed_domains = ["quotes.toscrape.com"]
-    start_urls = ["http://quotes.toscrape.com/"]
+    start_urls = ["http://quotes.toscrape.com/authors"]
 
     def parse(self, response):
-        for q in response.xpath("//span[@class='text']/a"):
-            yield response.follow(url=self.start_urls[0] + q.xpath("span/a/@href").get(), callback=self.parse_author)
-
-    def parse_author(self, response):
-        author_name = response.xpath("//h3/text()").get()
-        birth_date = response.xpath("//span[@class='author-born-date']/text()").get()
-        birth_place = response.xpath("//span[@class='author-born-location']/text()").get()
-        description = response.xpath("//div[@class='author-description']/text()").get()
-        yield {
-            "name": author_name,
-            "birth_date": birth_date,
-            "birth_place": birth_place,
-            "description": description,
-        }
+        for author in response.xpath("//div[@class='author-details']"):
+            yield {
+                "name": author.xpath(".//h3/text()").get(),
+                "birth_date": author.xpath(".//span[@class='author-born-date']/text()").get(),
+                "birth_place": author.xpath(".//span[@class='author-born-location']/text()").get(),
+                "description": author.xpath(".//div[@class='author-description']/text()").get(),
+            }
+        next_link = response.xpath("//li[@class='next']/a/@href").get()
+        if next_link:
+            yield response.follow(next_link, callback=self.parse)
 
 
 if __name__ == "__main__":
@@ -57,3 +53,5 @@ if __name__ == "__main__":
     process.crawl(QuotesSpider)
     process.crawl(AuthorsSpider)
     process.start()
+
+    
