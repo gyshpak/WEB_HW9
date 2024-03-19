@@ -34,8 +34,9 @@ class AuthorsSpider(scrapy.Spider):
     start_urls = ["http://quotes.toscrape.com/"]
 
     def parse(self, response):
-        for q in response.xpath("//span[@class='text']/a"):
-            yield response.follow(url=self.start_urls[0] + q.xpath("span/a/@href").get(), callback=self.parse_author)
+        for quote in response.xpath("//div[@class='quote']"):
+            author_url = quote.xpath("span/a/@href").get()
+            yield response.follow(url=response.urljoin(author_url), callback=self.parse_author)
 
     def parse_author(self, response):
         author_name = response.xpath("//h3/text()").get()
